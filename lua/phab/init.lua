@@ -29,21 +29,20 @@ M.setup = function(options)
   end
 end
 
+M.current_revision = function()
+  return vim.json.decode(vim.fn.system { "phab", "current-revision" })
+end
+
 M.set_inlines = function()
-  local output = vim.fn.system { 'echo', 'hi' }
-  -- local bufnr = vim.api.nvim_get_current_buf()
-  -- local lines = {}
-  -- for i = 1, 3 do
-  --   table.insert(lines, ('%d | %s'):format(i, vim.fn.strftime('%F')))
-  -- end
-  -- -- vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-  -- vim.fn.setqflist({
-  --   { bufnr = bufnr, lnum = 1, col = 5 , text = "foo"}, 
-  --   { bufnr = bufnr, lnum = 2, col = 10 , text = "bar"},
-  --   { bufnr = bufnr, lnum = 3, col = 13 , text = "baz" }
-  -- })
-  --
-  -- vim.api.nvim_command('Trouble quickfix')
+  local output = vim.json.decode(vim.fn.system { "phab", "list-inlines", M.current_revision() })
+  local qf = {}
+  for _, comments in ipairs(output) do
+    for _, comment in ipairs(comments.comments) do
+      table.insert(qf, { filename = comments.path, lnum = comments.line, text = comment.content.raw })
+    end
+  end
+  vim.fn.setqflist(qf)
+  vim.api.nvim_command('Trouble quickfix')
 end
 --
 -- M.resize = function()
